@@ -10,22 +10,43 @@ jobs:
   deploy-dev:
     if: github.ref == 'refs/heads/develop'
     runs-on: ubuntu-latest
+    env:
+      HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_DEV }}
     steps:
       - name: Deploy a DEV
-        run: curl -s -X POST "${{ secrets.RENDER_DEPLOY_HOOK_DEV }}"
+        run: |
+          if [ -z "$HOOK_URL" ]; then
+            echo "Secret RENDER_DEPLOY_HOOK_DEV no configurado aún, saltando deploy."
+            exit 0
+          fi
+          curl -s -X POST "$HOOK_URL"
 
   deploy-qa:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    env:
+      HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_QA }}
     steps:
       - name: Deploy a QA
-        run: curl -s -X POST "${{ secrets.RENDER_DEPLOY_HOOK_QA }}"
+        run: |
+          if [ -z "$HOOK_URL" ]; then
+            echo "Secret RENDER_DEPLOY_HOOK_QA no configurado aún, saltando deploy."
+            exit 0
+          fi
+          curl -s -X POST "$HOOK_URL"
 
   deploy-prd:
     if: github.ref == 'refs/heads/main'
     needs: deploy-qa
     runs-on: ubuntu-latest
     environment: production
+    env:
+      HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_PRD }}
     steps:
       - name: Deploy a PRD
-        run: curl -s -X POST "${{ secrets.RENDER_DEPLOY_HOOK_PRD }}"
+        run: |
+          if [ -z "$HOOK_URL" ]; then
+            echo "Secret RENDER_DEPLOY_HOOK_PRD no configurado aún, saltando deploy."
+            exit 0
+          fi
+          curl -s -X POST "$HOOK_URL"
