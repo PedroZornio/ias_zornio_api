@@ -55,6 +55,30 @@ def create_user():
     return jsonify({"id": user_id, "name": name, "email": email}), 201
 
 
+@users_bp.route('/users/<int:user_id>', methods=['PUT'])
+def update_user(user_id):
+    data = request.get_json(silent=True)
+    if not data:
+        return jsonify({"error": "JSON body required"}), 400
+    name = data.get('name', '').strip()
+    email = data.get('email', '').strip()
+    if not name or not email:
+        return jsonify({"error": "name and email are required"}), 400
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute(
+        "UPDATE users SET name = %s, email = %s WHERE id = %s RETURNING id",
+        (name, email, user_id)
+    )
+    updated = cur.fetchone()
+    conn.commit()
+    cur.close()
+    conn.close()
+    if not updated:
+        return jsonify({"error": "User not found"}), 404
+    return jsonify({"id": user_id, "name": name, "email": email})
+
+
 @users_bp.route('/users/<int:user_id>', methods=['DELETE'])
 def delete_user(user_id):
     conn = get_connection()

@@ -86,6 +86,31 @@ def test_create_user_no_body(client):
     assert response.status_code == 400
 
 
+def test_update_user_success(client):
+    with patch('app.routes.users.get_connection') as mock_conn:
+        mock_cursor = MagicMock()
+        mock_cursor.fetchone.return_value = (1,)
+        mock_conn.return_value.cursor.return_value = mock_cursor
+        response = client.put('/users/1', json={'name': 'Juan Updated', 'email': 'updated@test.com'})
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data['name'] == 'Juan Updated'
+
+
+def test_update_user_not_found(client):
+    with patch('app.routes.users.get_connection') as mock_conn:
+        mock_cursor = MagicMock()
+        mock_cursor.fetchone.return_value = None
+        mock_conn.return_value.cursor.return_value = mock_cursor
+        response = client.put('/users/999', json={'name': 'X', 'email': 'x@test.com'})
+    assert response.status_code == 404
+
+
+def test_update_user_missing_fields(client):
+    response = client.put('/users/1', json={'name': 'Solo nombre'})
+    assert response.status_code == 400
+
+
 def test_delete_user_success(client):
     with patch('app.routes.users.get_connection') as mock_conn:
         mock_cursor = MagicMock()
